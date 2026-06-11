@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>중환자실 약물 계산기</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Malgun Gothic', 'Noto Sans KR', sans-serif; background: #f2f2f7; color: #1c1c1e; }
+header { background: #fff; padding: 16px 20px; border-bottom: 1px solid #e5e5ea; position: sticky; top: 0; z-index: 99; }
+header h1 { font-size: 20px; font-weight: 700; }
+header p { font-size: 13px; color: #8e8e93; margin-top: 3px; }
+.wrap { padding: 0 16px 40px; max-width: 500px; margin: 0 auto; }
+.sec-label { font-size: 12px; font-weight: 600; color: #8e8e93; letter-spacing: 0.4px; margin: 22px 0 10px; }
+.drug-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.drug-btn {
+  background: #fff; border: 2px solid #e5e5ea; border-radius: 14px;
+  padding: 14px 12px; cursor: pointer; text-align: left; width: 100%;
+  font-family: inherit;
+}
+.drug-btn:active, .drug-btn.on { border-color: #007aff; background: #e8f1ff; }
+.dn { font-size: 14px; font-weight: 700; color: #1c1c1e; display: block; margin-bottom: 4px; }
+.ds { font-size: 11px; color: #8e8e93; display: block; line-height: 1.4; }
+.drug-btn.on .dn { color: #007aff; }
+.drug-btn.on .ds { color: #4a90d9; }
+.dr-wrap { display: flex; flex-direction: column; gap: 8px; }
+.dr-btn {
+  background: #fff; border: 2px solid #e5e5ea; border-radius: 14px;
+  padding: 14px 16px; cursor: pointer; text-align: left; width: 100%;
+  font-family: inherit;
+}
+.dr-btn:active, .dr-btn.on { border-color: #007aff; background: #e8f1ff; }
+.dr-name { font-size: 14px; font-weight: 700; display: block; margin-bottom: 4px; color: #1c1c1e; }
+.dr-sub { font-size: 11px; color: #8e8e93; line-height: 1.5; }
+.dr-btn.on .dr-name { color: #007aff; }
+.dr-btn.on .dr-sub { color: #4a90d9; }
+.input-card { background: #fff; border-radius: 16px; overflow: hidden; }
+.irow { display: flex; align-items: center; padding: 14px 16px; border-bottom: 1px solid #f2f2f7; }
+.irow:last-child { border-bottom: none; }
+.irow label { font-size: 16px; font-weight: 500; flex: 1; }
+.irow input {
+  width: 120px; padding: 9px 12px; border: 1.5px solid #e5e5ea;
+  border-radius: 10px; font-size: 17px; text-align: right;
+  color: #1c1c1e; background: #f2f2f7; font-family: inherit;
+}
+.irow input:focus { outline: none; border-color: #007aff; background: #fff; }
+.unit-txt { font-size: 13px; color: #8e8e93; min-width: 90px; text-align: right; padding-left: 8px; }
+.result-box {
+  background: #007aff; border-radius: 20px; padding: 28px 20px 24px;
+  margin-top: 14px; text-align: center;
+}
+.result-box.empty { background: #fff; border: 1.5px solid #e5e5ea; }
+.rlabel { font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 10px; }
+.result-box.empty .rlabel { color: #8e8e93; }
+.rval { font-size: 52px; font-weight: 800; color: #fff; line-height: 1; letter-spacing: -1px; }
+.runit { font-size: 22px; font-weight: 400; color: rgba(255,255,255,0.75); }
+.result-box.empty .rval { color: #c7c7cc; font-size: 38px; }
+.result-box.empty .runit { color: #c7c7cc; }
+.rmix { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 14px; line-height: 1.7; }
+.result-box.empty .rmix { color: #aeaeb2; }
+.warn { margin-top: 16px; padding: 12px 14px; border-radius: 12px; background: #fffbea; border-left: 3px solid #ffcc00; font-size: 12px; color: #7a6200; line-height: 1.6; }
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>중환자실 약물 계산기</h1>
+  <p>약물 선택 → 체중/용량 입력 → cc/hr 확인</p>
+</header>
+<div class="wrap">
+  <p class="sec-label">약물 선택</p>
+  <div class="drug-grid">
+    <button class="drug-btn" id="d0" onclick="pickDrug(0)"><span class="dn">Norepinephrine</span><span class="ds">NE (Q-Phrine®)</span></button>
+    <button class="drug-btn" id="d1" onclick="pickDrug(1)"><span class="dn">Midazolam</span><span class="ds">바스캄® 0.5mg/cc</span></button>
+    <button class="drug-btn" id="d2" onclick="pickDrug(2)"><span class="dn">Midazolam</span><span class="ds">바스캄® 1mg/cc</span></button>
+    <button class="drug-btn" id="d3" onclick="pickDrug(3)"><span class="dn">Remifentanil</span><span class="ds">REMIVA® 50mcg/cc</span></button>
+    <button class="drug-btn" id="d4" onclick="pickDrug(4)"><span class="dn">Dexmedetomidine</span><span class="ds">Dexmedine® 4mcg/cc</span></button>
+    <button class="drug-btn" id="d5" onclick="pickDrug(5)"><span class="dn">Rocuronium</span><span class="ds">ROCUNIUM® 5mg/cc</span></button>
+  </div>
+
+  <div id="drSection" class="hidden">
+    <p class="sec-label">처방 의사 선택</p>
+    <div class="dr-wrap">
+      <button class="dr-btn" id="dr0" onclick="pickDoc(0)">
+        <span class="dr-name">Dr. 심재광·성주욱 — Type 1</span>
+        <span class="dr-sub">처방단위: mcg/min · 희석농도 40mcg/cc<br>NE 8mg(2@) + 5DW 192cc = 200cc</span>
+      </button>
+      <button class="dr-btn" id="dr1" onclick="pickDoc(1)">
+        <span class="dr-name">Dr. 심재광·성주욱 — Type 2</span>
+        <span class="dr-sub">처방단위: mcg/min · 희석농도 80mcg/cc<br>NE 8mg(2@) + 5DW 92cc = 100cc</span>
+      </button>
+      <button class="dr-btn" id="dr2" onclick="pickDoc(2)">
+        <span class="dr-name">Dr. 배장환·임지훈·나해정·길송이</span>
+        <span class="dr-sub">처방단위: mcg/kg/min · 희석농도 80mcg/cc<br>NE 8mg(2@) + 5DW 92cc = 100cc</span>
+      </button>
+    </div>
+  </div>
+
+  <p class="sec-label">용량 입력</p>
+  <div class="input-card">
+    <div class="irow">
+      <label for="wt">체중</label>
+      <input type="number" id="wt" inputmode="decimal" placeholder="0" min="1" max="300" oninput="calc()">
+      <span class="unit-txt">kg</span>
+    </div>
+    <div class="irow">
+      <label for="dose">처방 용량</label>
+      <input type="number" id="dose" inputmode="decimal" placeholder="0" min="0" step="any" oninput="calc()">
+      <span class="unit-txt" id="unitTxt">—</span>
+    </div>
+  </div>
+
+  <div class="result-box empty" id="resBox">
+    <p class="rlabel">주입 속도</p>
+    <p class="rval" id="resVal">—<span class="runit"> cc/hr</span></p>
+    <p class="rmix" id="resMix">약물을 먼저 선택해 주세요</p>
+  </div>
+
+  <div class="warn">⚠️ 참고용입니다. 실제 투약 전 처방 내용과 희석 농도를 반드시 재확인하세요.</div>
+</div>
+
+<script type="text/javascript">
+var SD = -1, SDc = -1;
+var DRUGS = [
+  {hasDoc:1},
+  {unit:'mg/kg/hr', cMg:0.5, mix:'바스캄® 50mg + 5DW 50cc = Total 100cc'},
+  {unit:'mg/kg/hr', cMg:1.0, mix:'바스캄® 50mg 원액 50cc'},
+  {unit:'mcg/kg/min', cMcg:50, mix:'REMIVA® 5mg + 5DW 100cc = Total 100cc'},
+  {unit:'mcg/kg/hr', cMcg:4, mix:'Dexmedine® 400mcg + 5DW 96cc = 100cc\n또는 Dextomin Premix® 400mcg/100cc'},
+  {unit:'mg/kg/hr', cMg:5, mix:'ROCUNIUM® 250mg + 5DW 25cc = Total 50cc'}
+];
+var DOCS = [
+  {unit:'mcg/min', cMcg:40, mix:'NE 8mg(2@) + 5DW 192cc = 200cc'},
+  {unit:'mcg/min', cMcg:80, mix:'NE 8mg(2@) + 5DW 92cc = 100cc'},
+  {unit:'mcg/kg/min', cMcg:80, mix:'NE 8mg(2@) + 5DW 92cc = 100cc'}
+];
+
+function pickDrug(i) {
+  SD = i; SDc = -1;
+  for(var b=0;b<6;b++) document.getElementById('d'+b).className='drug-btn';
+  document.getElementById('d'+i).className='drug-btn on';
+  for(var c=0;c<3;c++) document.getElementById('dr'+c).className='dr-btn';
+  var ds = document.getElementById('drSection');
+  ds.className = DRUGS[i].hasDoc ? '' : 'hidden';
+  calc();
+}
+
+function pickDoc(j) {
+  SDc = j;
+  for(var c=0;c<3;c++) document.getElementById('dr'+c).className='dr-btn';
+  document.getElementById('dr'+j).className='dr-btn on';
+  calc();
+}
+
+function calc() {
+  var opt = null;
+  if(SD >= 0) { opt = DRUGS[SD].hasDoc ? (SDc>=0 ? DOCS[SDc] : null) : DRUGS[SD]; }
+  document.getElementById('unitTxt').textContent = opt ? opt.unit : '—';
+  var w = parseFloat(document.getElementById('wt').value);
+  var d = parseFloat(document.getElementById('dose').value);
+  var box = document.getElementById('resBox');
+  var rv = document.getElementById('resVal');
+  var rm = document.getElementById('resMix');
+  if(!opt || !w || !d || w<=0 || d<=0 || isNaN(w) || isNaN(d)) {
+    box.className='result-box empty';
+    rv.innerHTML='—<span class="runit"> cc/hr</span>';
+    rm.textContent = !opt ? (SD>=0 && DRUGS[SD].hasDoc ? '처방 의사를 선택해 주세요' : '약물을 먼저 선택해 주세요') : (opt.mix||'');
+    return;
+  }
+  var cc=0;
+  if(opt.cMg) { cc=(d*w)/opt.cMg; }
+  else {
+    var c=opt.cMcg;
+    if(opt.unit==='mcg/min') cc=(d*60)/c;
+    else if(opt.unit==='mcg/kg/min') cc=(d*w*60)/c;
+    else if(opt.unit==='mcg/kg/hr') cc=(d*w)/c;
+  }
+  box.className='result-box';
+  rv.innerHTML=cc.toFixed(2)+'<span class="runit"> cc/hr</span>';
+  rm.textContent=opt.mix||'';
+}
+</script>
+</body>
+</html>
